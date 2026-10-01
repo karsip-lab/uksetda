@@ -36,10 +36,10 @@ body{line-height:inherit;margin:0;font-family:'Inter',sans-serif}
 .max-w-3xl{max-width:48rem}
 .mx-auto{margin-left:auto;margin-right:auto}
 .mt-1{margin-top:0.25rem}.mt-2{margin-top:0.5rem}.mt-4{margin-top:1rem}.mt-6{margin-top:1.5rem}.mt-8{margin-top:2rem}.mb-1{margin-bottom:0.25rem}.mb-3{margin-bottom:0.75rem}
-.p-4{padding:1rem}.px-4{padding-left:1rem;padding-right:1rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.py-8{padding-top:2rem;padding-bottom:2rem}
-.bg-slate-900{background-color:#0f172a}.bg-blue-600{background-color:#2563eb}.bg-white{background-color:#fff}.bg-gray-50{background-color:#f9fafb}
+.p-4{padding:1rem}.p-5{padding:1.25rem}.px-4{padding-left:1rem;padding-right:1rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.py-8{padding-top:2rem;padding-bottom:2rem}
+.bg-slate-900{background-color:#0f172a}.bg-blue-600{background-color:#2563eb}.bg-white{background-color:#fff}.bg-gray-50{background-color:#f9fafb}.bg-slate-50{background-color:#f8fafc}
 .rounded-lg{border-radius:.5rem}.rounded-xl{border-radius:.75rem}
-.border{border-width:1px}.border-gray-200{border-color:#e5e7eb}
+.border{border-width:1px}.border-gray-200{border-color:#e5e7eb}.border-slate-200{border-color:#e2e8f0}
 .shadow-lg{box-shadow:0 10px 15px -3px rgb(0 0 0 / .1)}.shadow-sm{box-shadow:0 1px 2px 0 rgb(0 0 0 / .05)}
 
 /* Teks & Typography */
@@ -50,29 +50,49 @@ body{line-height:inherit;margin:0;font-family:'Inter',sans-serif}
 .text-3xl{font-size:1.875rem;line-height:2.25rem}
 .font-bold{font-weight:700}.font-extrabold{font-weight:800}.font-medium{font-weight:500}.font-semibold{font-weight:600}
 .italic{font-style:italic}
-.text-white{color:#fff}.text-blue-500{color:#3b82f6}.text-emerald-600{color:#059669}.text-blue-700{color:#1d4ed8}.text-slate-300{color:#cbd5e1}.text-slate-700{color:#334155}.text-slate-800{color:#1e293b}.text-gray-500{color:#6b7280}.text-gray-700{color:#374151}
+.text-white{color:#fff}.text-blue-500{color:#3b82f6}.text-emerald-600{color:#059669}.text-blue-700{color:#1d4ed8}.text-slate-300{color:#cbd5e1}.text-slate-600{color:#475569}.text-slate-700{color:#334155}.text-slate-800{color:#1e293b}.text-gray-500{color:#6b7280}.text-gray-700{color:#374151}
 .font-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
 
-/* Badge Lokasi Fisik Arsip */
-.badge-location {
-  display: inline-flex;
-  gap: 0.75rem;
-  background-color: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  padding: 0.4rem 0.75rem;
-  border-radius: 0.5rem;
+/* Detail Hasil Tampilan */
+.card-result {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05);
+  transition: border-color 0.15s;
+}
+.card-result:hover {
+  border-color: #3b82f6;
+}
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 0.5rem;
   font-size: 0.875rem;
-  font-weight: 600;
-  color: #0f172a;
+  margin-top: 0.75rem;
+  background-color: #f8fafc;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #f1f5f9;
 }
-.badge-location span {
-  display: inline-flex;
-  align-items: center;
+@media (min-width: 640px) {
+  .detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
-.badge-location .label {
+.detail-item {
+  display: flex;
+  flex-direction: row;
+}
+.detail-label {
   color: #64748b;
   font-weight: 500;
-  margin-right: 0.25rem;
+  min-width: 140px;
+}
+.detail-val {
+  color: #0f172a;
+  font-weight: 600;
 }
 
 /* Interaksi & Loader */
@@ -130,7 +150,7 @@ body{line-height:inherit;margin:0;font-family:'Inter',sans-serif}
     </form>
 
     <section class="text-sm text-gray-700 mt-4 text-center">
-      <p>
+      <p id="statusText">
         Cari lokasi fisik arsip Unit Kearsipan dengan cepat dan akurat.
       </p>
     </section>
@@ -142,7 +162,7 @@ body{line-height:inherit;margin:0;font-family:'Inter',sans-serif}
 
   <div class="max-w-3xl mx-auto mt-6">
     <div id="searchInfo" class="text-sm text-gray-500 mb-3 text-center"></div>
-    <div id="resultsContainer" class="space-y-3"></div>
+    <div id="resultsContainer" class="space-y-4"></div>
   </div>
 
 </main>
@@ -150,31 +170,35 @@ body{line-height:inherit;margin:0;font-family:'Inter',sans-serif}
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
-// LINK CSV GOOGLE SHEETS DBASEALL
-const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTew22s2Qyu_h3wfXf9qgyrUdngYEcFLEbyRe8SW8FgszUwv_b9loSLTM-vJ8YylsRl6gdgchgOKX24/pub?gid=2143819377&single=true&output=csv";
+// LINK CSV DBASEALL VIA CORS PROXY
+const RAW_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTew22s2Qyu_h3wfXf9qgyrUdngYEcFLEbyRe8SW8FgszUwv_b9loSLTM-vJ8YylsRl6gdgchgOKX24/pub?gid=2143819377&single=true&output=csv";
+const SHEET_URL = "https://corsproxy.io/?" + encodeURIComponent(RAW_URL);
+
 let archiveData = [];
 
-// =====================
-// Load CSV (PapaParse) - Mengikuti metode persis karsip.pages.dev
-// =====================
 function loadData() {
   Papa.parse(SHEET_URL, {
     download: true,
     header: true,
     skipEmptyLines: true,
     complete: function(results) {
-      archiveData = results.data;
+      archiveData = results.data.filter(row => Object.values(row).some(val => val && val.trim() !== ''));
       console.log("Data berhasil dimuat:", archiveData.length);
+      document.getElementById("statusText").innerText = `Database terhubung (${archiveData.length} data siap dicari).`;
     },
     error: function(err) {
       console.error("Gagal load data:", err);
+      document.getElementById("statusText").innerText = "Gagal terhubung ke database. Silakan refresh halaman.";
     }
   });
 }
 
-// =====================
-// Fungsi pencarian
-// =====================
+function getVal(row, keyName) {
+  if (!row) return '-';
+  const foundKey = Object.keys(row).find(k => k.trim().toLowerCase() === keyName.toLowerCase());
+  return (foundKey && row[foundKey] && row[foundKey].trim() !== '') ? row[foundKey].trim() : '-';
+}
+
 function performSearch(q) {
   const terms = q.toLowerCase().split(" ");
   return archiveData.filter(i => {
@@ -183,9 +207,6 @@ function performSearch(q) {
   }).slice(0, 50);
 }
 
-// =====================
-// Tampilkan hasil pencarian
-// =====================
 function showResults(q) {
   const data = performSearch(q);
   const c = document.getElementById("resultsContainer");
@@ -200,61 +221,84 @@ function showResults(q) {
   }
 
   c.innerHTML = data.map(i => {
-    const getVal = (key) => {
-      const foundKey = Object.keys(i).find(k => k.trim().toUpperCase() === key.toUpperCase());
-      return foundKey ? i[foundKey] : '-';
-    };
+    const uraian = getVal(i, 'Uraian_Informasi_Arsip');
+    const kode = getVal(i, 'Kode_Klasifikasi');
+    const boks = getVal(i, 'Boks');
+    const folder = getVal(i, 'Folder');
+    const berkas = getVal(i, 'No_Berkas');
+    const arsip = getVal(i, 'No_Arsip');
+    const kurun = getVal(i, 'Kurun_Waktu');
+    const tingkat = getVal(i, 'Tingkat_Perkembangan');
+    const nasib = getVal(i, 'Nasib_Akhir');
 
     return `
-      <div class="border border-gray-200 rounded-xl p-4 shadow-sm hover:border-blue-400 transition bg-white">
+      <div class="card-result">
         
-        <!-- Informasi Lokasi Fisik Arsip -->
-        <div class="mb-3">
-          <div class="badge-location">
-            <span><span class="label">No. Urut:</span> ${getVal('NOMOR_URUT')}</span>
-            <span>•</span>
-            <span><span class="label">Boks:</span> <strong class="text-blue-700">${getVal('NOMOR_BOKS')}</strong></span>
-            <span>•</span>
-            <span><span class="label">Folder:</span> <strong class="text-blue-700">${getVal('NOMOR_FOLDER')}</strong></span>
+        <!-- Uraian Informasi Arsip -->
+        <div class="mb-2">
+          <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Uraian Informasi Arsip:</span>
+          <div class="text-base font-bold text-slate-800 leading-relaxed">
+            ${uraian}
           </div>
         </div>
 
-        <!-- Kode Klasifikasi & Kurun Waktu -->
-        <div class="flex justify-between items-center text-xs text-gray-500 font-mono mb-1">
-          <span>Kode: <b class="text-slate-800">${getVal('KODE_KLASIFIKASI')}</b></span>
-          <span>${getVal('KURUN_WAKTU') !== '-' ? 'Tahun ' + getVal('KURUN_WAKTU') : ''}</span>
-        </div>
-
-        <!-- Uraian / Informasi Isi Arsip -->
-        <div class="text-sm sm:text-base font-semibold text-slate-800 leading-snug">
-          ${getVal('URAIAN')}
-        </div>
-
-        <!-- Unit Pengolah -->
-        ${getVal('UNIT_PENGOLAH') !== '-' ? `
-          <div class="mt-2 text-xs text-gray-500 italic">
-            Unit Pengolah: ${getVal('UNIT_PENGOLAH')}
+        <!-- Detail Rincian Arsip -->
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="detail-label">Kode Klasifikasi:</span>
+            <span class="detail-val font-mono text-blue-700">${kode}</span>
           </div>
-        ` : ''}
+
+          <div class="detail-item">
+            <span class="detail-label">No. Boks:</span>
+            <span class="detail-val text-blue-700">${boks}</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-label">No. Folder:</span>
+            <span class="detail-val text-blue-700">${folder}</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-label">No. Berkas:</span>
+            <span class="detail-val">${berkas}</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-label">No. Arsip:</span>
+            <span class="detail-val">${arsip}</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-label">Kurun Waktu:</span>
+            <span class="detail-val">${kurun}</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-label">Tingkat Perkembangan:</span>
+            <span class="detail-val">${tingkat}</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-label">Nasib Akhir:</span>
+            <span class="detail-val">${nasib}</span>
+          </div>
+        </div>
 
       </div>
     `;
   }).join("");
 }
 
-// =====================
-// Event Listener Form Search
-// =====================
 document.getElementById("searchForm").addEventListener("submit", e => {
   e.preventDefault();
   const q = document.getElementById("searchInput").value.trim();
-  if (q.length < 2) return;
+  if (q.length < 1) return;
 
   document.getElementById("home-loader").classList.remove("hidden");
-  setTimeout(() => showResults(q), 200);
+  setTimeout(() => showResults(q), 150);
 });
 
-// Jalankan pengambilan data langsung
 loadData();
 
 });

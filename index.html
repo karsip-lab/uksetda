@@ -147,7 +147,7 @@ body{line-height:inherit;margin:0;font-family:'Inter',sans-serif}
 document.addEventListener("DOMContentLoaded", () => {
 
 // TEMPEL LINK CSV GOOGLE SHEETS KAMU DI SINI
-const https://docs.google.com/spreadsheets/d/e/2PACX-1vTew22s2Qyu_h3wfXf9qgyrUdngYEcFLEbyRe8SW8FgszUwv_b9IoSLTM-vJ8YylsRI6gdgchg0KX24/pubhtml = "NANTI_TEMPEL_LINK_CSV_DI_SINI";
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTew22s2Qyu_h3wfXf9qgyrUdngYEcFLEbyRe8SW8FgszUwv_b9loSLTM-vJ8YylsRl6gdgchgOKX24/pub?gid=2143819377&single=true&output=csv";
 
 let archiveData = [];
 
@@ -160,7 +160,7 @@ const homeLoader = document.getElementById("home-loader");
 // 1. Ambil Data Otomatis dari Google Sheets
 // =====================
 function loadSpreadsheetData() {
-  Papa.parse(https://docs.google.com/spreadsheets/d/e/2PACX-1vTew22s2Qyu_h3wfXf9qgyrUdngYEcFLEbyRe8SW8FgszUwv_b9IoSLTM-vJ8YylsRI6gdgchg0KX24/pubhtml, {
+  Papa.parse(CSV_URL, {
     download: true,
     header: true,
     skipEmptyLines: true,

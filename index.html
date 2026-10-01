@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Sistem Pencarian Arsip Unit Kearsipan</title>
+
+<meta name="description" content="Aplikasi pencarian lokasi fisik arsip otomatis terintegrasi Google Sheets.">
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+
+<!-- Library PapaParse untuk membaca data CSV Google Sheets -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+<style>
+/* Reset & Dasar */
+*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}
+body{line-height:inherit;margin:0;font-family:'Inter',sans-serif}
+
+/* Layout & Container */
+.container{width:100%;margin-right:auto;margin-left:auto;padding-right:1rem;padding-left:1rem}
+.flex{display:flex}
+.flex-col{flex-direction:column}
+.flex-grow{flex-grow:1}
+.items-stretch{align-items:stretch}
+.gap-2{gap:0.5rem}
+.gap-6{gap:1.5rem}
+.hidden{display:none}
+.min-h-screen{min-height:100vh}
+.relative{position:relative}
+
+/* Ukuran & Warna */
+.w-full{width:100%}
+.max-w-xl{max-width:36rem}
+.max-w-3xl{max-width:48rem}
+.mx-auto{margin-left:auto;margin-right:auto}
+.mt-1{margin-top:0.25rem}.mt-2{margin-top:0.5rem}.mt-4{margin-top:1rem}.mt-6{margin-top:1.5rem}.mt-8{margin-top:2rem}.mb-1{margin-bottom:0.25rem}.mb-3{margin-bottom:0.75rem}
+.p-4{padding:1rem}.px-4{padding-left:1rem;padding-right:1rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.py-8{padding-top:2rem;padding-bottom:2rem}
+.bg-slate-900{background-color:#0f172a}.bg-blue-600{background-color:#2563eb}.bg-white{background-color:#fff}.bg-gray-50{background-color:#f9fafb}
+.rounded-lg{border-radius:.5rem}.rounded-xl{border-radius:.75rem}
+.border{border-width:1px}.border-gray-200{border-color:#e5e7eb}
+.shadow-lg{box-shadow:0 10px 15px -3px rgb(0 0 0 / .1)}.shadow-sm{box-shadow:0 1px 2px 0 rgb(0 0 0 / .05)}
+
+/* Teks & Typography */
+.text-center{text-align:center}
+.text-xs{font-size:0.75rem;line-height:1rem}
+.text-sm{font-size:0.875rem;line-height:1.25rem}
+.text-base{font-size:1rem;line-height:1.5rem}
+.text-3xl{font-size:1.875rem;line-height:2.25rem}
+.font-bold{font-weight:700}.font-extrabold{font-weight:800}.font-medium{font-weight:500}.font-semibold{font-weight:600}
+.italic{font-style:italic}
+.text-white{color:#fff}.text-blue-500{color:#3b82f6}.text-emerald-600{color:#059669}.text-blue-700{color:#1d4ed8}.text-slate-300{color:#cbd5e1}.text-slate-800{color:#1e293b}.text-gray-500{color:#6b7280}
+.font-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+
+/* Badge Lokasi Fisik */
+.badge-location {
+  display: inline-flex;
+  gap: 0.75rem;
+  background-color: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  padding: 0.4rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+.badge-location span {
+  display: inline-flex;
+  align-items: center;
+}
+.badge-location .label {
+  color: #64748b;
+  font-weight: 500;
+  margin-right: 0.25rem;
+}
+
+/* Loader */
+.hover\:border-blue-400:hover{border-color:#60a5fa}
+.transition{transition-property:all;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}
+.loader{border:3px solid #f3f3f3;border-top:3px solid #2563eb;border-radius:50%;width:24px;height:24px;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media (min-width: 640px) {
+  .container{max-width:640px}
+  .sm\:max-w-3xl{max-width:48rem}
+  .sm\:flex-row{flex-direction:row}
+  .sm\:items-center{align-items:center}
+  .sm\:w-auto{width:auto}
+  .sm\:px-6{padding-left:1.5rem;padding-right:1.5rem}
+  .sm\:py-3{padding-top:0.75rem;padding-bottom:0.75rem}
+  .sm\:py-10{padding-top:2.5rem;padding-bottom:2.5rem}
+  .sm\:text-4xl{font-size:2.25rem;line-height:2.5rem}
+  .sm\:text-base{font-size:1rem;line-height:1.5rem}
+  .sm\:text-lg{font-size:1.125rem;line-height:1.75rem}
+}
+@media (min-width: 768px) {
+  .container{max-width:768px}
+  .md\:text-lg{font-size:1.125rem;line-height:1.75rem}
+}
+</style>
+</head>
+
+<body class="min-h-screen flex flex-col text-slate-800 bg-white">
+
+<header class="bg-slate-900 text-white py-8 sm:py-10 shadow-lg relative">
+  <div class="container mx-auto px-4 text-center">
+    <div class="text-3xl sm:text-4xl font-extrabold italic">
+      <span class="text-blue-500">Cari</span><span class="text-emerald-600">Arsip</span>
+    </div>
+    <h1 class="text-sm sm:text-base md:text-lg font-medium text-slate-300 mt-1">
+      Pencarian Lokasi Fisik Arsip - Unit Kearsipan
+    </h1>
+  </div>
+</header>
+
+<main id="page-home" class="flex-grow container mx-auto px-4 mt-8 pb-24 relative">
+
+  <div class="max-w-xl sm:max-w-3xl mx-auto space-y-6">
+    <!-- Form Pencarian -->
+    <form id="searchForm" class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+      <input id="searchInput"
+        class="w-full flex-grow px-4 py-3 rounded-lg border bg-gray-50 text-base"
+        placeholder="Menghubungkan ke Google Sheets..." disabled>
+
+      <button type="submit" id="searchBtn"
+        class="px-4 py-2 sm:px-6 sm:py-3 bg-blue-600 text-white rounded-lg text-sm sm:text-base font-semibold w-full sm:w-auto opacity-50 cursor-not-allowed" disabled>
+        CARI ARSIP
+      </button>
+    </form>
+
+    <div id="home-loader" class="mt-6 flex justify-center">
+      <div class="loader mx-auto"></div>
+    </div>
+  </div>
+
+  <div class="max-w-3xl mx-auto mt-6">
+    <div id="searchInfo" class="text-sm text-gray-500 mb-3 text-center">
+      Mengunduh database terbaru...
+    </div>
+    <div id="resultsContainer" class="space-y-3"></div>
+  </div>
+
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+// TEMPEL LINK CSV GOOGLE SHEETS KAMU DI SINI
+const https://docs.google.com/spreadsheets/d/e/2PACX-1vTew22s2Qyu_h3wfXf9qgyrUdngYEcFLEbyRe8SW8FgszUwv_b9IoSLTM-vJ8YylsRI6gdgchg0KX24/pubhtml = "NANTI_TEMPEL_LINK_CSV_DI_SINI";
+
+let archiveData = [];
+
+const searchInput = document.getElementById("searchInput");
+const searchBtn = document.getElementById("searchBtn");
+const searchInfo = document.getElementById("searchInfo");
+const homeLoader = document.getElementById("home-loader");
+
+// =====================
+// 1. Ambil Data Otomatis dari Google Sheets
+// =====================
+function loadSpreadsheetData() {
+  Papa.parse(https://docs.google.com/spreadsheets/d/e/2PACX-1vTew22s2Qyu_h3wfXf9qgyrUdngYEcFLEbyRe8SW8FgszUwv_b9IoSLTM-vJ8YylsRI6gdgchg0KX24/pubhtml, {
+    download: true,
+    header: true,
+    skipEmptyLines: true,
+    complete: (results) => {
+      archiveData = results.data;
+      homeLoader.classList.add("hidden");
+
+      if (archiveData.length > 0) {
+        searchInput.disabled = false;
+        searchBtn.disabled = false;
+        searchInput.placeholder = "Ketik uraian arsip, nomor boks, atau kode klasifikasi...";
+        searchBtn.classList.remove("opacity-50", "cursor-not-allowed");
+        searchInfo.textContent = `Database terhubung (${archiveData.length} data siap dicari).`;
+      } else {
+        searchInfo.textContent = "Database kosong atau format tidak sesuai.";
+      }
+    },
+    error: (err) => {
+      homeLoader.classList.add("hidden");
+      searchInfo.textContent = "Gagal memuat database. Pastikan link CSV Google Sheets sudah benar dan dipublikasikan.";
+    }
+  });
+}
+
+// =====================
+// 2. Logika Pencarian
+// =====================
+function performSearch(q) {
+  const terms = q.toLowerCase().split(" ");
+  
+  return archiveData.filter(row => {
+    const rowValues = Object.values(row).join(" ").toLowerCase();
+    return terms.every(term => rowValues.includes(term));
+  }).slice(0, 50);
+}
+
+// =====================
+// 3. Tampilkan Hasil Pencarian
+// =====================
+function showResults(q) {
+  const data = performSearch(q);
+  const container = document.getElementById("resultsContainer");
+
+  homeLoader.classList.add("hidden");
+
+  if(data.length > 0){
+    searchInfo.innerHTML = `Menampilkan <b>${data.length}</b> hasil untuk: <b>${q}</b>`;
+  } else {
+    searchInfo.innerHTML = `Tidak ditemukan arsip untuk kata kunci <b>${q}</b>`;
+  }
+
+  container.innerHTML = data.map(i => {
+    const getVal = (key) => {
+      const foundKey = Object.keys(i).find(k => k.trim().toUpperCase() === key.toUpperCase());
+      return foundKey ? i[foundKey] : '-';
+    };
+
+    return `
+      <div class="border border-gray-200 rounded-xl p-4 shadow-sm hover:border-blue-400 transition bg-white">
+        
+        <!-- Informasi Lokasi Fisik Arsip -->
+        <div class="mb-3">
+          <div class="badge-location">
+            <span><span class="label">No. Urut:</span> ${getVal('NOMOR_URUT')}</span>
+            <span>•</span>
+            <span><span class="label">Boks:</span> <strong class="text-blue-700">${getVal('NOMOR_BOKS')}</strong></span>
+            <span>•</span>
+            <span><span class="label">Folder:</span> <strong class="text-blue-700">${getVal('NOMOR_FOLDER')}</strong></span>
+          </div>
+        </div>
+
+        <!-- Kode Klasifikasi & Kurun Waktu -->
+        <div class="flex justify-between items-center text-xs text-gray-500 font-mono mb-1">
+          <span>Kode: <b class="text-slate-800">${getVal('KODE_KLASIFIKASI')}</b></span>
+          <span>${getVal('KURUN_WAKTU') !== '-' ? 'Tahun ' + getVal('KURUN_WAKTU') : ''}</span>
+        </div>
+
+        <!-- Uraian / Informasi Isi Arsip -->
+        <div class="text-sm sm:text-base font-semibold text-slate-800 leading-snug">
+          ${getVal('URAIAN')}
+        </div>
+
+        <!-- Unit Pengolah -->
+        ${getVal('UNIT_PENGOLAH') !== '-' ? `
+          <div class="mt-2 text-xs text-gray-500 italic">
+            Unit Pengolah: ${getVal('UNIT_PENGOLAH')}
+          </div>
+        ` : ''}
+
+      </div>
+    `;
+  }).join("");
+}
+
+// =====================
+// 4. Event Listener
+// =====================
+document.getElementById("searchForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const q = searchInput.value.trim();
+  if(q.length < 2) return;
+
+  homeLoader.classList.remove("hidden");
+  setTimeout(() => showResults(q), 150);
+});
+
+// Jalankan pengambilan data pertama kali saat aplikasi dibuka
+loadSpreadsheetData();
+
+});
+</script>
+
+</body>
+</html>

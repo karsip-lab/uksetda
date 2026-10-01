@@ -143,10 +143,9 @@ body{line-height:inherit;margin:0;font-family:'Inter',sans-serif}
       </button>
     </form>
 
-    <section class="text-sm text-gray-700 mt-4 text-center">
-      <p id="statusText">
-        Menghubungkan ke database...
-      </p>
+    <section class="text-sm text-gray-700 mt-4 text-center flex justify-center items-center gap-2">
+      <span id="statusText">Menghubungkan ke database...</span>
+      <button id="refreshBtn" onclick="forceRefreshData()" class="text-xs text-blue-600 underline font-semibold hover:text-blue-800 hidden">(Perbarui Data)</button>
     </section>
 
     <div id="home-loader" class="hidden mt-6 flex justify-center">
@@ -164,29 +163,55 @@ body{line-height:inherit;margin:0;font-family:'Inter',sans-serif}
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
-// TEMPELKAN URL APPS SCRIPT BARU KAMU DI SINI
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzdOsy6iF4IxytegU472Q1kVoKYpNSdKC2kd2--hlrj7B3lRcCw9htC9rk4r0AX32IO/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzG_f-iEVVlO_CRHNMumbzW4Rn1hfibyHJMDMPVkvWqRCPvZsEu20bZvW_qqlrFhb8A/exec";
+const CACHE_KEY = "UKSETDA_ARCHIVE_DATA";
+const CACHE_TIME_KEY = "UKSETDA_CACHE_TIME";
+const CACHE_EXPIRE_MS = 60 * 60 * 1000; // Cache tersimpan selama 1 jam
 
 let archiveData = [];
 
 function loadData() {
+  const cachedData = localStorage.getItem(CACHE_KEY);
+  const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
+  const now = new Date().getTime();
+
+  // Jika data ada di cache browser dan belum kadaluarsa, langsung muat secara instan!
+  if (cachedData && cachedTime && (now - cachedTime < CACHE_EXPIRE_MS)) {
+    archiveData = JSON.parse(cachedData);
+    document.getElementById("statusText").innerText = `Database terhubung (${archiveData.length} data siap dicari).`;
+    document.getElementById("refreshBtn").classList.remove("hidden");
+  } else {
+    // Kunjungan pertama atau cache kadaluarsa: ambil dari Google Apps Script
+    fetchDataFromServer();
+  }
+}
+
+function fetchDataFromServer() {
+  document.getElementById("statusText").innerText = "Mengunduh data terbaru dari Google Sheets...";
+  
   fetch(SCRIPT_URL)
     .then(response => response.json())
     .then(data => {
       archiveData = data;
-      console.log("Data berhasil dimuat:", archiveData.length);
-      const statusEl = document.getElementById("statusText");
-      if (archiveData.length > 0) {
-        statusEl.innerText = `Database terhubung (${archiveData.length} data siap dicari).`;
-      } else {
-        statusEl.innerText = "Database kosong.";
-      }
+      // Simpan ke Cache Browser
+      localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+      localStorage.setItem(CACHE_TIME_KEY, new Date().getTime());
+
+      document.getElementById("statusText").innerText = `Database terhubung (${archiveData.length} data siap dicari).`;
+      document.getElementById("refreshBtn").classList.remove("hidden");
     })
     .catch(err => {
       console.error("Gagal load data:", err);
       document.getElementById("statusText").innerText = "Gagal terhubung ke database. Pastikan izin Apps Script sudah diatur ke Anyone.";
     });
 }
+
+// Tombol manual untuk memperbarui data jika ada entri baru di Spreadsheet
+window.forceRefreshData = function() {
+  localStorage.removeItem(CACHE_KEY);
+  localStorage.removeItem(CACHE_TIME_KEY);
+  fetchDataFromServer();
+};
 
 function getVal(row, keyNames) {
   if (!row) return '-';

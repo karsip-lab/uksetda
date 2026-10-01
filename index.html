@@ -50,7 +50,7 @@ body{line-height:inherit;margin:0;font-family:'Inter',sans-serif}
 .text-white{color:#fff}.text-blue-500{color:#3b82f6}.text-emerald-600{color:#059669}.text-blue-700{color:#1d4ed8}.text-slate-300{color:#cbd5e1}.text-slate-600{color:#475569}.text-slate-700{color:#334155}.text-slate-800{color:#1e293b}.text-gray-500{color:#6b7280}.text-gray-700{color:#374151}
 .font-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
 
-/* Detail Hasil Tampilan */
+/* Detail Hasil Tampilan (Tersusun Lurus Ke Bawah di Kiri) */
 .card-result {
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -62,30 +62,27 @@ body{line-height:inherit;margin:0;font-family:'Inter',sans-serif}
 .card-result:hover {
   border-color: #3b82f6;
 }
-.detail-grid {
-  display: grid;
-  grid-template-columns: repeat(1, minmax(0, 1fr));
+.detail-list {
+  display: flex;
+  flex-direction: column;
   gap: 0.5rem;
   font-size: 0.875rem;
   margin-top: 0.75rem;
   background-color: #f8fafc;
-  padding: 0.75rem 1rem;
+  padding: 0.875rem 1rem;
   border-radius: 0.5rem;
   border: 1px solid #f1f5f9;
-}
-@media (min-width: 640px) {
-  .detail-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 .detail-item {
   display: flex;
   flex-direction: row;
+  align-items: baseline;
 }
 .detail-label {
   color: #64748b;
   font-weight: 500;
-  min-width: 140px;
+  width: 180px;
+  flex-shrink: 0;
 }
 .detail-val {
   color: #0f172a;
@@ -167,7 +164,7 @@ body{line-height:inherit;margin:0;font-family:'Inter',sans-serif}
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
-// URL APPS SCRIPT TERBARU DBASEALL
+// URL APPS SCRIPT DBASEALL
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzG_f-iEVVlO_CRHNMumbzW4Rn1hfibyHJMDMPVkvWqRCPvZsEu20bZvW_qqlrFhb8A/exec";
 
 let archiveData = [];
@@ -244,7 +241,8 @@ function showResults(q) {
           </div>
         </div>
 
-        <div class="detail-grid">
+        <!-- Daftar Rincian Lurus ke Bawah Rata Kiri -->
+        <div class="detail-list">
           <div class="detail-item">
             <span class="detail-label">Kode Klasifikasi:</span>
             <span class="detail-val font-mono text-blue-700">${kode}</span>

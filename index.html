@@ -146,8 +146,9 @@ body{line-height:inherit;margin:0;font-family:'Inter',sans-serif}
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
-// TEMPEL LINK CSV GOOGLE SHEETS KAMU DI SINI
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTew22s2Qyu_h3wfXf9qgyrUdngYEcFLEbyRe8SW8FgszUwv_b9loSLTM-vJ8YylsRl6gdgchgOKX24/pub?gid=2143819377&single=true&output=csv";
+// LINK CSV GOOGLE SHEETS DBASEALL DENGAN PROXY CORS
+const GOOGLE_SHEET_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTew22s2Qyu_h3wfXf9qgyrUdngYEcFLEbyRe8SW8FgszUwv_b9loSLTM-vJ8YylsRl6gdgchgOKX24/pub?gid=2143819377&single=true&output=csv";
+const CSV_URL = "https://corsproxy.io/?" + encodeURIComponent(GOOGLE_SHEET_CSV);
 
 let archiveData = [];
 

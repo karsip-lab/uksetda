@@ -4,14 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Sistem Pencarian Arsip Unit Kearsipan</title>
+<title>CariArsip – Pencarian Lokasi Fisik Arsip Unit Kearsipan</title>
 
 <meta name="description" content="Aplikasi pencarian lokasi fisik arsip otomatis terintegrasi Google Sheets.">
+<meta name="author" content="CariArsip">
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 
-<!-- Library PapaParse untuk membaca data CSV Google Sheets -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+<!-- PapaParse -->
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
 <style>
 /* Reset & Dasar */
@@ -25,7 +26,6 @@ body{line-height:inherit;margin:0;font-family:'Inter',sans-serif}
 .flex-grow{flex-grow:1}
 .items-stretch{align-items:stretch}
 .gap-2{gap:0.5rem}
-.gap-6{gap:1.5rem}
 .hidden{display:none}
 .min-h-screen{min-height:100vh}
 .relative{position:relative}
@@ -50,10 +50,10 @@ body{line-height:inherit;margin:0;font-family:'Inter',sans-serif}
 .text-3xl{font-size:1.875rem;line-height:2.25rem}
 .font-bold{font-weight:700}.font-extrabold{font-weight:800}.font-medium{font-weight:500}.font-semibold{font-weight:600}
 .italic{font-style:italic}
-.text-white{color:#fff}.text-blue-500{color:#3b82f6}.text-emerald-600{color:#059669}.text-blue-700{color:#1d4ed8}.text-slate-300{color:#cbd5e1}.text-slate-800{color:#1e293b}.text-gray-500{color:#6b7280}
+.text-white{color:#fff}.text-blue-500{color:#3b82f6}.text-emerald-600{color:#059669}.text-blue-700{color:#1d4ed8}.text-slate-300{color:#cbd5e1}.text-slate-700{color:#334155}.text-slate-800{color:#1e293b}.text-gray-500{color:#6b7280}.text-gray-700{color:#374151}
 .font-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
 
-/* Badge Lokasi Fisik */
+/* Badge Lokasi Fisik Arsip */
 .badge-location {
   display: inline-flex;
   gap: 0.75rem;
@@ -75,10 +75,10 @@ body{line-height:inherit;margin:0;font-family:'Inter',sans-serif}
   margin-right: 0.25rem;
 }
 
-/* Loader */
+/* Interaksi & Loader */
 .hover\:border-blue-400:hover{border-color:#60a5fa}
 .transition{transition-property:all;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}
-.loader{border:3px solid #f3f3f3;border-top:3px solid #2563eb;border-radius:50%;width:24px;height:24px;animation:spin .8s linear infinite}
+.loader{border:3px solid #f3f3f3;border-top:3px solid #3b82f6;border-radius:50%;width:24px;height:24px;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 @media (min-width: 640px) {
@@ -116,28 +116,32 @@ body{line-height:inherit;margin:0;font-family:'Inter',sans-serif}
 
 <main id="page-home" class="flex-grow container mx-auto px-4 mt-8 pb-24 relative">
 
-  <div class="max-w-xl sm:max-w-3xl mx-auto space-y-6">
+  <div class="max-w-xl sm:max-w-3xl mx-auto">
     <!-- Form Pencarian -->
     <form id="searchForm" class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
       <input id="searchInput"
         class="w-full flex-grow px-4 py-3 rounded-lg border bg-gray-50 text-base"
-        placeholder="Menghubungkan ke Google Sheets..." disabled>
+        placeholder="Ketik uraian arsip, nomor boks, atau kode klasifikasi...">
 
-      <button type="submit" id="searchBtn"
-        class="px-4 py-2 sm:px-6 sm:py-3 bg-blue-600 text-white rounded-lg text-sm sm:text-base font-semibold w-full sm:w-auto opacity-50 cursor-not-allowed" disabled>
-        CARI ARSIP
+      <button type="submit"
+        class="px-4 py-2 sm:px-6 sm:py-3 bg-blue-600 text-white rounded-lg text-sm sm:text-base font-semibold w-full sm:w-auto">
+        CARI
       </button>
     </form>
 
-    <div id="home-loader" class="mt-6 flex justify-center">
+    <section class="text-sm text-gray-700 mt-4 text-center">
+      <p>
+        Cari lokasi fisik arsip Unit Kearsipan dengan cepat dan akurat.
+      </p>
+    </section>
+
+    <div id="home-loader" class="hidden mt-6 flex justify-center">
       <div class="loader mx-auto"></div>
     </div>
   </div>
 
   <div class="max-w-3xl mx-auto mt-6">
-    <div id="searchInfo" class="text-sm text-gray-500 mb-3 text-center">
-      Mengunduh database terbaru...
-    </div>
+    <div id="searchInfo" class="text-sm text-gray-500 mb-3 text-center"></div>
     <div id="resultsContainer" class="space-y-3"></div>
   </div>
 
@@ -146,74 +150,56 @@ body{line-height:inherit;margin:0;font-family:'Inter',sans-serif}
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
-// LINK CSV GOOGLE SHEETS DBASEALL DENGAN PROXY CORS
-const GOOGLE_SHEET_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTew22s2Qyu_h3wfXf9qgyrUdngYEcFLEbyRe8SW8FgszUwv_b9loSLTM-vJ8YylsRl6gdgchgOKX24/pub?gid=2143819377&single=true&output=csv";
-const CSV_URL = "https://corsproxy.io/?" + encodeURIComponent(GOOGLE_SHEET_CSV);
-
+// LINK CSV GOOGLE SHEETS DBASEALL
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTew22s2Qyu_h3wfXf9qgyrUdngYEcFLEbyRe8SW8FgszUwv_b9loSLTM-vJ8YylsRl6gdgchgOKX24/pub?gid=2143819377&single=true&output=csv";
 let archiveData = [];
 
-const searchInput = document.getElementById("searchInput");
-const searchBtn = document.getElementById("searchBtn");
-const searchInfo = document.getElementById("searchInfo");
-const homeLoader = document.getElementById("home-loader");
-
 // =====================
-// 1. Ambil Data Otomatis dari Google Sheets
+// Load CSV (PapaParse) - Mengikuti metode persis karsip.pages.dev
 // =====================
-function loadSpreadsheetData() {
-  Papa.parse(CSV_URL, {
+function loadData() {
+  Papa.parse(SHEET_URL, {
     download: true,
     header: true,
     skipEmptyLines: true,
-    complete: (results) => {
+    complete: function(results) {
       archiveData = results.data;
-      homeLoader.classList.add("hidden");
-
-      if (archiveData.length > 0) {
-        searchInput.disabled = false;
-        searchBtn.disabled = false;
-        searchInput.placeholder = "Ketik uraian arsip, nomor boks, atau kode klasifikasi...";
-        searchBtn.classList.remove("opacity-50", "cursor-not-allowed");
-        searchInfo.textContent = `Database terhubung (${archiveData.length} data siap dicari).`;
-      } else {
-        searchInfo.textContent = "Database kosong atau format tidak sesuai.";
-      }
+      console.log("Data berhasil dimuat:", archiveData.length);
     },
-    error: (err) => {
-      homeLoader.classList.add("hidden");
-      searchInfo.textContent = "Gagal memuat database. Pastikan link CSV Google Sheets sudah benar dan dipublikasikan.";
+    error: function(err) {
+      console.error("Gagal load data:", err);
     }
   });
 }
 
 // =====================
-// 2. Logika Pencarian
+// Fungsi pencarian
 // =====================
 function performSearch(q) {
   const terms = q.toLowerCase().split(" ");
-  
-  return archiveData.filter(row => {
-    const rowValues = Object.values(row).join(" ").toLowerCase();
+  return archiveData.filter(i => {
+    const rowValues = Object.values(i).join(" ").toLowerCase();
     return terms.every(term => rowValues.includes(term));
   }).slice(0, 50);
 }
 
 // =====================
-// 3. Tampilkan Hasil Pencarian
+// Tampilkan hasil pencarian
 // =====================
 function showResults(q) {
   const data = performSearch(q);
-  const container = document.getElementById("resultsContainer");
+  const c = document.getElementById("resultsContainer");
+  const info = document.getElementById("searchInfo");
 
-  homeLoader.classList.add("hidden");
+  document.getElementById("home-loader").classList.add("hidden");
 
-  if(data.length > 0){
-    searchInfo.innerHTML = `Menampilkan <b>${data.length}</b> hasil untuk: <b>${q}</b>`;
+  if (data.length > 0) {
+    info.innerHTML = `Menampilkan <b>${data.length}</b> hasil untuk: <b>${q}</b>`;
   } else {
-    searchInfo.innerHTML = `Tidak ditemukan arsip untuk kata kunci <b>${q}</b>`;
+    info.innerHTML = `Tidak ditemukan arsip untuk kata kunci <b>${q}</b>`;
   }
 
-  container.innerHTML = data.map(i => {
+  c.innerHTML = data.map(i => {
     const getVal = (key) => {
       const foundKey = Object.keys(i).find(k => k.trim().toUpperCase() === key.toUpperCase());
       return foundKey ? i[foundKey] : '-';
@@ -257,19 +243,19 @@ function showResults(q) {
 }
 
 // =====================
-// 4. Event Listener
+// Event Listener Form Search
 // =====================
 document.getElementById("searchForm").addEventListener("submit", e => {
   e.preventDefault();
-  const q = searchInput.value.trim();
-  if(q.length < 2) return;
+  const q = document.getElementById("searchInput").value.trim();
+  if (q.length < 2) return;
 
-  homeLoader.classList.remove("hidden");
-  setTimeout(() => showResults(q), 150);
+  document.getElementById("home-loader").classList.remove("hidden");
+  setTimeout(() => showResults(q), 200);
 });
 
-// Jalankan pengambilan data pertama kali saat aplikasi dibuka
-loadSpreadsheetData();
+// Jalankan pengambilan data langsung
+loadData();
 
 });
 </script>

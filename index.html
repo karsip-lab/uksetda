@@ -11,9 +11,6 @@
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 
-<!-- PapaParse -->
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-
 <style>
 /* Reset & Dasar */
 *,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}
@@ -170,33 +167,40 @@ body{line-height:inherit;margin:0;font-family:'Inter',sans-serif}
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
-// LINK CSV DBASEALL VIA CORS PROXY
-const RAW_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTew22s2Qyu_h3wfXf9qgyrUdngYEcFLEbyRe8SW8FgszUwv_b9loSLTM-vJ8YylsRl6gdgchgOKX24/pub?gid=2143819377&single=true&output=csv";
-const SHEET_URL = "https://corsproxy.io/?" + encodeURIComponent(RAW_URL);
+// LINK APPS SCRIPT LANGSUNG
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0Ghlv9MI4tX7tzlb_EI0K-XgqRQG_6KXv07uA3sj281R3AB_dStrXslXj6qbPeOsI/exec";
 
 let archiveData = [];
 
 function loadData() {
-  Papa.parse(SHEET_URL, {
-    download: true,
-    header: true,
-    skipEmptyLines: true,
-    complete: function(results) {
-      archiveData = results.data.filter(row => Object.values(row).some(val => val && val.trim() !== ''));
+  fetch(SCRIPT_URL)
+    .then(response => response.json())
+    .then(data => {
+      archiveData = data;
       console.log("Data berhasil dimuat:", archiveData.length);
-      document.getElementById("statusText").innerText = `Database terhubung (${archiveData.length} data siap dicari).`;
-    },
-    error: function(err) {
+      const statusEl = document.getElementById("statusText");
+      if (archiveData.length > 0) {
+        statusEl.innerText = `Database terhubung (${archiveData.length} data siap dicari).`;
+      } else {
+        statusEl.innerText = "Database kosong.";
+      }
+    })
+    .catch(err => {
       console.error("Gagal load data:", err);
-      document.getElementById("statusText").innerText = "Gagal terhubung ke database. Silakan refresh halaman.";
-    }
-  });
+      document.getElementById("statusText").innerText = "Gagal terhubung ke database. Pastikan izin Apps Script sudah diatur ke Anyone.";
+    });
 }
 
-function getVal(row, keyName) {
+function getVal(row, keyNames) {
   if (!row) return '-';
-  const foundKey = Object.keys(row).find(k => k.trim().toLowerCase() === keyName.toLowerCase());
-  return (foundKey && row[foundKey] && row[foundKey].trim() !== '') ? row[foundKey].trim() : '-';
+  const rowKeys = Object.keys(row);
+  for (let name of keyNames) {
+    const foundKey = rowKeys.find(k => k.trim().toLowerCase().replace(/[^a-z0-9]/g, '') === name.toLowerCase().replace(/[^a-z0-9]/g, ''));
+    if (foundKey && row[foundKey] && row[foundKey].toString().trim() !== '') {
+      return row[foundKey].toString().trim();
+    }
+  }
+  return '-';
 }
 
 function performSearch(q) {
@@ -221,20 +225,18 @@ function showResults(q) {
   }
 
   c.innerHTML = data.map(i => {
-    const uraian = getVal(i, 'Uraian_Informasi_Arsip');
-    const kode = getVal(i, 'Kode_Klasifikasi');
-    const boks = getVal(i, 'Boks');
-    const folder = getVal(i, 'Folder');
-    const berkas = getVal(i, 'No_Berkas');
-    const arsip = getVal(i, 'No_Arsip');
-    const kurun = getVal(i, 'Kurun_Waktu');
-    const tingkat = getVal(i, 'Tingkat_Perkembangan');
-    const nasib = getVal(i, 'Nasib_Akhir');
+    const uraian = getVal(i, ['Uraian_Informasi_Arsip', 'Uraian']);
+    const kode = getVal(i, ['Kode_Klasifikasi', 'Kode']);
+    const boks = getVal(i, ['Boks', 'No_Boks']);
+    const folder = getVal(i, ['Folder', 'No_Folder']);
+    const berkas = getVal(i, ['No_Berkas', 'Berkas']);
+    const arsip = getVal(i, ['No_Arsip', 'Arsip']);
+    const kurun = getVal(i, ['Kurun_Waktu', 'Kurun']);
+    const tingkat = getVal(i, ['Tingkat_Perkembangan', 'Tingkat']);
+    const nasib = getVal(i, ['Nasib_Akhir', 'Nasib']);
 
     return `
       <div class="card-result">
-        
-        <!-- Uraian Informasi Arsip -->
         <div class="mb-2">
           <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Uraian Informasi Arsip:</span>
           <div class="text-base font-bold text-slate-800 leading-relaxed">
@@ -242,7 +244,6 @@ function showResults(q) {
           </div>
         </div>
 
-        <!-- Detail Rincian Arsip -->
         <div class="detail-grid">
           <div class="detail-item">
             <span class="detail-label">Kode Klasifikasi:</span>
@@ -284,7 +285,6 @@ function showResults(q) {
             <span class="detail-val">${nasib}</span>
           </div>
         </div>
-
       </div>
     `;
   }).join("");
@@ -303,6 +303,9 @@ loadData();
 
 });
 </script>
+
+</body>
+</html>
 
 </body>
 </html>

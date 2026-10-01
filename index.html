@@ -145,7 +145,7 @@ body{line-height:inherit;margin:0;font-family:'Inter',sans-serif}
 
     <section class="text-sm text-gray-700 mt-4 text-center">
       <p id="statusText">
-        Cari lokasi fisik arsip Unit Kearsipan dengan cepat dan akurat.
+        Menghubungkan ke database...
       </p>
     </section>
 
@@ -164,8 +164,8 @@ body{line-height:inherit;margin:0;font-family:'Inter',sans-serif}
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
-// URL APPS SCRIPT DBASEALL
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzG_f-iEVVlO_CRHNMumbzW4Rn1hfibyHJMDMPVkvWqRCPvZsEu20bZvW_qqlrFhb8A/exec";
+// TEMPELKAN URL APPS SCRIPT BARU KAMU DI SINI
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzdOsy6iF4IxytegU472Q1kVoKYpNSdKC2kd2--hlrj7B3lRcCw9htC9rk4r0AX32IO/exec";
 
 let archiveData = [];
 
@@ -235,51 +235,50 @@ function showResults(q) {
     return `
       <div class="card-result">
         <div class="mb-2">
-          <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Uraian Informasi Arsip</span>
+          <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Uraian Informasi Arsip:</span>
           <div class="text-base font-bold text-slate-800 leading-relaxed">
             ${uraian}
           </div>
         </div>
 
-        <!-- Daftar Rincian Lurus ke Bawah Rata Kiri -->
         <div class="detail-list">
           <div class="detail-item">
-            <span class="detail-label">Kode Klasifikasi</span>
+            <span class="detail-label">Kode Klasifikasi:</span>
             <span class="detail-val font-mono text-blue-700">${kode}</span>
           </div>
 
           <div class="detail-item">
-            <span class="detail-label">No. Boks</span>
+            <span class="detail-label">No. Boks:</span>
             <span class="detail-val text-blue-700">${boks}</span>
           </div>
 
           <div class="detail-item">
-            <span class="detail-label">No. Folder</span>
+            <span class="detail-label">No. Folder:</span>
             <span class="detail-val text-blue-700">${folder}</span>
           </div>
 
           <div class="detail-item">
-            <span class="detail-label">No. Berkas</span>
+            <span class="detail-label">No. Berkas:</span>
             <span class="detail-val">${berkas}</span>
           </div>
 
           <div class="detail-item">
-            <span class="detail-label">No. Arsip</span>
+            <span class="detail-label">No. Arsip:</span>
             <span class="detail-val">${arsip}</span>
           </div>
 
           <div class="detail-item">
-            <span class="detail-label">Kurun Waktu</span>
+            <span class="detail-label">Kurun Waktu:</span>
             <span class="detail-val">${kurun}</span>
           </div>
 
           <div class="detail-item">
-            <span class="detail-label">Tingkat Perkembangan</span>
+            <span class="detail-label">Tingkat Perkembangan:</span>
             <span class="detail-val">${tingkat}</span>
           </div>
 
           <div class="detail-item">
-            <span class="detail-label">Nasib Akhir</span>
+            <span class="detail-label">Nasib Akhir:</span>
             <span class="detail-val">${nasib}</span>
           </div>
         </div>
@@ -294,7 +293,7 @@ document.getElementById("searchForm").addEventListener("submit", e => {
   if (q.length < 1) return;
 
   document.getElementById("home-loader").classList.remove("hidden");
-  setTimeout(() => showResults(q), 150);
+  setTimeout(() => showResults(q), 100);
 });
 
 loadData();

@@ -230,7 +230,7 @@ function performSearch(q) {
   return archiveData.filter(i => {
     const rowValues = Object.values(i).join(" ").toLowerCase();
     return terms.every(term => rowValues.includes(term));
-  }).slice(0, 50);
+  });
 }
 
 function showResults(q) {

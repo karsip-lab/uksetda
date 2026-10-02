@@ -187,7 +187,7 @@ function loadData() {
 }
 
 function fetchDataFromServer() {
-  document.getElementById("statusText").innerText = "Mengunduh data terbaru dari Google Sheets...";
+  document.getElementById("statusText").innerText = "Mengambil data terbaru...";
   
   fetch(SCRIPT_URL)
     .then(response => response.json())

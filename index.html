@@ -158,7 +158,7 @@ body{line-height:inherit;margin:0;font-family:'Inter',sans-serif}
 
   <div class="max-w-3xl mx-auto mt-6">
     <div id="searchInfo" class="text-sm text-gray-500 mb-3 text-center"></div>
-    <div id="resultsContainer" class="space-y-4"></div>
+    <div id="resultsContainer"></div>
   </div>
 
 </main>
@@ -251,6 +251,8 @@ function showResults(q) {
   }
 
   c.innerHTML = data.map(i => {
+    // Ambil nilai Unit Kerja khusus dari nama sheet
+    const unit = i.NamaSheet || i.Sheet || i.Unit_Kerja || getVal(i, ['NamaSheet', 'Unit_Kerja', 'Sheet']);
     const uraian = getVal(i, ['Uraian_Informasi_Arsip', 'Uraian']);
     const kode = getVal(i, ['Kode_Klasifikasi', 'Kode']);
     const boks = getVal(i, ['Boks', 'No_Boks']);
@@ -270,13 +272,12 @@ function showResults(q) {
           </div>
         </div>
 
-<div class="detail-list">
+        <div class="detail-list">
           <div class="detail-item">
             <span class="detail-label">Unit Kerja:</span>
-            <span class="detail-val text-blue-700">${kode}</span>
+            <span class="detail-val text-emerald-600">${unit}</span>
           </div>
-          
-        <div class="detail-list">
+
           <div class="detail-item">
             <span class="detail-label">Kode Klasifikasi:</span>
             <span class="detail-val text-blue-700">${kode}</span>
